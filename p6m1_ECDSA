@@ -1,0 +1,38 @@
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives import serialization
+import binascii
+
+# Mensaje a firmar (el mismo del ejercicio anterior)
+mensaje = b"ESTAMOS EN CLASE DE CRIPTOGRAFIA"
+
+# Generar una clave privada ECDSA con SECP256K1
+private_key = ec.generate_private_key(
+    ec.SECP256K1(),
+    default_backend()
+)
+
+# Obtener la clave pública correspondiente
+public_key = private_key.public_key()
+
+# Firmar el mensaje utilizando ECDSA
+signature = private_key.sign(
+    mensaje,
+    ec.ECDSA(hashes.SHA256())
+)
+
+# Mostrar la firma en formato hexadecimal
+firma_hex = binascii.hexlify(signature).decode()
+print("Firma ECDSA (SECP256K1) en hexadecimal:", firma_hex)
+
+# Verificación de la firma
+try:
+    public_key.verify(
+        signature,
+        mensaje,
+        ec.ECDSA(hashes.SHA256())
+    )
+    print("La firma ECDSA es válida.")
+except Exception as e:
+    print(f"La firma ECDSA no es válida: {e}")
