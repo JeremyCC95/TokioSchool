@@ -2,40 +2,57 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 import binascii
 
-# Cargar la clave privada
-with open("jeremy_privada.pem", "rb") as key_file:
-    private_key = serialization.load_pem_private_key(
-        key_file.read(),
-        password=None,
-        backend=default_backend(),
-    )
+# Generar una nueva clave RSA de 2048 bits
+private_key = rsa.generate_private_key(
+    public_exponent=65537,
+    key_size=2048,
+    backend=default_backend(),
+)
 
-# Mensaje a firmar
-mensaje = b"ESTAMOS EN CLASE DE CRIPTOGRAFIA"
+# Serializar la clave privada para guardarla en un archivo
+private_pem = private_key.private_bytes(
+    encoding=serialization.Encoding.PEM,
+    format=serialization.PrivateFormat.PKCS8,
+    encryption_algorithm=serialization.NoEncryption(),
+)
 
-# Firmar el mensaje
+with open("nueva_clave_privada_2048_2.pem", "wb") as key_file:
+    key_file.write(private_pem)
+
+# Leer el contenido del archivo "p6m1_firmado.bin"
+with open("p6m1_firmado.bin", "rb") as archivo_firmado:
+    contenido_firmado = archivo_firmado.read()
+
+# Firmar el contenido del archivo
 firma = private_key.sign(
-    mensaje,
+    contenido_firmado,
     padding.PSS(
         mgf=padding.MGF1(hashes.SHA256()),
         salt_length=padding.PSS.MAX_LENGTH,
     ),
     hashes.SHA256(),
 )
-
+ 
 # Mostrar la firma en hexadecimal
 firma_hex = binascii.hexlify(firma).decode()
-print("Firma en hexadecimal:", firma_hex)
+print("Firma del archivo p6m1_firmado.bin (clave de 2048 bits):", firma_hex)
 
-# Verificar la firma
+# Guardar la firma en un archivo llamado "p6m1_firmado_firmado.bin"
+with open("p6m1_firmado_firmado.bin", "wb") as firma_file:
+    firma_file.write(firma)
+
+print("Firma del archivo p6m1_firmado.bin guardada en p6m1_firmado_firmado.bin")
+
+# Verificar la firma (opcional)
 public_key = private_key.public_key()
 
 try:
     public_key.verify(
         firma,
-        mensaje,
+        contenido_firmado,
         padding.PSS(
             mgf=padding.MGF1(hashes.SHA256()),
             salt_length=padding.PSS.MAX_LENGTH,
